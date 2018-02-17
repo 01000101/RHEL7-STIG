@@ -27,3 +27,19 @@
   poll: 0
   tags:
     - aide
+
+- name: rebuild auditd rules
+  command: /sbin/augenrules --load
+  ignore_errors: yes
+  notify: restart auditd service
+
+- name: restart auditd service
+  service:
+    name: auditd
+    state: restarted
+    use: service
+
+- name: restart ntpd
+  service:
+    name: ntpd
+    state: restarted

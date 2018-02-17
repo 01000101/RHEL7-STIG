@@ -11,16 +11,18 @@
       - RHEL-07-010240
 
 - name: "MEDIUM | RHEL-07-010260 | AUDIT | Existing passwords must be restricted to a 60-day maximum lifetime."
-  command: "awk -F: '$5 > 60 {print $1}' /etc/shadow"
+  command: |
+    v1=$(/usr/bin/awk '/^UID_MIN/ {print $2}' /etc/login.defs);
+    /usr/bin/awk -v "uidmin=${v1}" -F: 'FILENAME == "/etc/passwd" { if ($3 >= uidmin) users[$1] } FILENAME == "/etc/shadow" { if ($1 in users && ($5 < 1 || $5 > 60)) badusers[$1]; } END { if (length(badusers) > 0){ for (user in badusers) {print user} } }' /etc/passwd /etc/shadow
   register: rhel_07_010260_audit
   failed_when: no
   changed_when: no
   ignore_errors: yes
   tags:
-      - cat2
-      - medium
-      - audit
-      - RHEL-07-010260
+  - cat2
+  - medium
+  - audit
+  - RHEL-07-010260
 
 - name: "MEDIUM | RHEL-07-020320 | AUDIT | All files and directories must have a valid owner."
   command: find / -xdev -fstype xfs -nouser
@@ -125,6 +127,19 @@
       - audit
       - RHEL-07-040410
       - ssh
+
+- name: "MEDIUM | RHEL-07-040510 | AUDIT | The OS must protect against or limit the effects of DoS attacks by implementing rate-limiting measures on interfaces."
+  command: /usr/bin/firewall-cmd --direct --get-all-rules
+  register: rhel_07_040510_audit
+  failed_when: no
+  changed_when: no
+  ignore_errors: yes
+  tags:
+  - cat2
+  - medium
+  - audit
+  - RHEL-07-040510
+  - firewall
 
 - name: "MEDIUM | RHEL-07-041010 | AUDIT | Wireless network adapters must be disabled."
   command: nmcli radio wifi
